@@ -13,6 +13,7 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -47,10 +48,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mainBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mainBinding.getRoot());
 
-        findView();
+        initListener();
         attachLauncher();
     }
 
+    //<editor-fold desc="Button Listener">
+    private void initListener() {
+        mainBinding.btnTake.setOnClickListener(this);
+        mainBinding.btnSend.setOnClickListener(this);
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="Camera Result Callback">
     private void attachLauncher() {
         someActivityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -73,12 +82,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
     }
+    //</editor-fold>
 
-    private void findView() {
-        mainBinding.btnTake.setOnClickListener(this);
-        mainBinding.btnSend.setOnClickListener(this);
-    }
-
+    //<editor-fold desc="Check Whether Permission is given by user or not">
     private void checkPermission() {
         Dexter.withContext(this)
                 .withPermissions(
@@ -105,7 +111,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .onSameThread()
                 .check();
     }
+    //</editor-fold>
 
+    //<editor-fold desc="Show setting dialog if the permission is not given">
     private void showSettingsDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle("Need Permissions");
@@ -125,7 +133,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         intent.setData(uri);
         startActivityForResult(intent, 101);
     }
+    //</editor-fold>
 
+    //<editor-fold desc="Method calls when the click on camera button">
     @SuppressLint("QueryPermissionsNeeded")
     private void dispatchTakePicturesIntent() {
         Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -147,7 +157,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     }
+    //</editor-fold>
 
+    //<editor-fold desc="Create the file with name for store camera clicked image">
     private File createImageFile() throws IOException {
         String imageFileName = "imageShare";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
@@ -156,10 +168,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         return image;
     }
+    //</editor-fold>
 
+    //<editor-fold desc="Send text and image both to specific whats app number">
     private void sendTextImageMessage() {
         String sendMessage = "This is the demo app for share the image in What's App";
 
+        /*
+           You have to change this number with your sender number (Please add country code of the number and don't add the any sign in the number (+))
+         */
         String phone = "919662436892";
 
         try {
@@ -180,7 +197,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         finish();
     }
+    //</editor-fold>
 
+    //<editor-fold desc="Send text to specific whats app number">
     private void sendOnlyTextMessage() {
         try {
 
@@ -196,12 +215,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             i.setData(Uri.parse(url));
             if (i.resolveActivity(packageManager) != null) {
                 startActivity(i);
+            } else {
+                Toast.makeText(this, "Please install Whats App first.", Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
+            Toast.makeText(this, "Please install Whats App first", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
     }
+    //</editor-fold>
 
+    //<editor-fold desc="On click listener">
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -214,4 +238,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
     }
+    //</editor-fold>
 }

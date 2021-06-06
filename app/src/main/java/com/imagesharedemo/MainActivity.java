@@ -3,9 +3,11 @@ package com.imagesharedemo;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -29,6 +31,7 @@ import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.List;
@@ -41,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     String currentPath = "";
     ActivityResultLauncher<Intent> someActivityResultLauncher;
+    Bitmap drawImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,8 +58,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     //<editor-fold desc="Button Listener">
     private void initListener() {
+        drawImage = BitmapFactory.decodeResource(getResources(), R.drawable.hacker);
+
         mainBinding.btnTake.setOnClickListener(this);
         mainBinding.btnSend.setOnClickListener(this);
+        mainBinding.btnDraw.setOnClickListener(this);
     }
     //</editor-fold>
 
@@ -174,15 +181,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void sendTextImageMessage() {
         String sendMessage = "This is the demo app for share the image in What's App";
 
+        Uri uri = Uri.parse("android.resource://com.imagesharedemo/drawable/hacker.png");
+
         /*
            You have to change this number with your sender number (Please add country code of the number and don't add the any sign in the number (+))
          */
-        String phone = "919662436892";
+        String phone = "919537824372";
 
         try {
             Intent intent = new Intent("android.intent.action.MAIN");
             Log.e(TAG, "openWhatsApp:--> " + FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", new File(currentPath)));
+            Log.e(TAG, "openWhatsApp:--> " + uri);
             intent.putExtra(Intent.EXTRA_STREAM, FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", new File(currentPath)));
+//            intent.putExtra(Intent.EXTRA_STREAM, uri);
             intent.putExtra("jid", phone + "@s.whatsapp.net");
             intent.putExtra(Intent.EXTRA_TEXT, sendMessage);
             intent.setAction(Intent.ACTION_SEND);
@@ -236,7 +247,40 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btn_send:
                 sendTextImageMessage();
                 break;
+
+            case R.id.btn_draw:
+                try {
+                    if (saveBitmapToFile(createImageFile())) {
+                        sendTextImageMessage();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
         }
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="Get image from drawable and store it in storage and send URI in whats app">
+    boolean saveBitmapToFile(File dir) {
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(dir);
+            drawImage.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            fos.close();
+            return true;
+        } catch (IOException e) {
+            Log.e("app", e.getMessage());
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+        return false;
     }
     //</editor-fold>
 }
